@@ -8,3 +8,8 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep shared navigation, footer, and route metadata helpers in a shared portfolio module so every public page has a consistent shell.
+- Keep illustrative pricing and attendee limits in a pure budget module with domain tests; estimates are not binding quotes.
+- Use global semantic design tokens and CSS motion with reduced-motion support for all portfolio visuals.
+- Pre-optimize React runtimes and shared UI dependencies in Vite so first-load dependency discovery does not replace the React instance during preview hydration.

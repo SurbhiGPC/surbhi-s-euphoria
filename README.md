@@ -1,14 +1,16 @@
-# Welcome to your Lovable project
+# Surbhi's Luxe Portfolio
+
+Build a personal student portfolio website of event management company for Surbhi Singh. Aesthetically rich in color, premium, modern, minimalist, and highly polished with smooth, performant animations. Include an interactive budget and pricing page tailored to client/team sizes up to 50 people with budget-friendly to premium tier options. make the colour palette in neon purple and black which looks premium .Include Surbhi's contact details: email surbs81@gmail.com and LinkedIn     https://www.linkedin.com/in/surbhisingh1705
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f5302b13-489b-4265-aab8-3e8dd9c4cfb3).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +22,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS

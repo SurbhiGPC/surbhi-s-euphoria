@@ -1,24 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
-});
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowDown, ArrowUpRight, ArrowRight, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ContactCTA, ProjectGrid, pageHead } from '@/components/portfolio';
+import hero from '@/assets/event-hero.jpg';
+export const Route = createFileRoute('/')({ head:()=>pageHead('Surbhi Singh — Events with intention','A student event-management portfolio by Surbhi Singh. Explore thoughtful event concepts, intimate celebrations, and budgets for up to 50 guests.'), component:Index });
+function Index() { return <main><section className="hero"><img className="hero-image" src={hero} alt="An intimate event with sculptural violet draping and elegant dinner tables" width={1920} height={1088} fetchPriority="high"/><div className="hero-inner"><div className="eyebrow reveal"><span className="status-dot"/> STUDENT. CREATOR. EVENT STORYTELLER.</div><h1 className="reveal">Surbhi Singh<span className="highlight">.</span><br/>Small gatherings.<br/><span className="highlight">Lasting impressions.</span></h1><p className="hero-copy reveal reveal-delay">Turning ideas into experiences. I bring a fresh perspective, thoughtful details, and a whole lot of heart to every event.</p><div className="hero-actions reveal reveal-delay"><Button size="lg" asChild><Link to="/work">Explore my work <ArrowUpRight/></Link></Button><Button variant="outline" size="lg" asChild><Link to="/budget">Plan your budget <ArrowRight/></Link></Button></div><div className="hero-bottom"><div><div className="signature">A little vision. A lot of intention.</div><span>Thoughtfully designed for gatherings of up to 50.</span></div><div className="flex gap-3 items-center">SCROLL TO DISCOVER <ArrowDown size={15}/></div></div></div></section><div className="specialties"><span>Intimate celebrations</span><Sparkles/><span>Campus experiences</span><Sparkles/><span>Corporate gatherings</span><Sparkles/><span>Moments that matter</span></div><section className="section"><div className="section-heading"><div><div className="eyebrow">01 / THE CREATIVE EDIT</div><h2>A glimpse of what’s possible<span className="highlight">.</span></h2></div><Button variant="link" asChild><Link to="/work">View all concepts <ArrowUpRight/></Link></Button></div><ProjectGrid/><p className="text-muted-foreground text-xs mt-5">Concept explorations · Illustrative event imagery</p></section><section className="section about-strip"><div><div className="eyebrow">02 / THE PERSON BEHIND THE PLANS</div><h2>Fresh ideas.<br/>Thoughtful execution.</h2></div><div><p>I’m Surbhi, a student exploring the art of event management. I believe the best experiences aren’t always the biggest — they’re the ones that make people feel something.</p><p>From the first moodboard to the final little detail, my approach is creative, considered, and always people-first.</p><Button variant="link" asChild><Link to="/about">A little more about me <ArrowUpRight/></Link></Button></div></section><ContactCTA/></main>; }

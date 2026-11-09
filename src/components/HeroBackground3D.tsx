@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState, Component, type ReactNode } from 'react';
+import { useEffect, useRef, useMemo, useState, Component, type ReactNode, type RefObject } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -181,73 +181,111 @@ function GlowingOrb({
   );
 }
 
-function HeroScene({ reducedMotion, isVisible }: { reducedMotion: boolean; isVisible: boolean }) {
+interface HeroSceneProps {
+  reducedMotion: boolean;
+  isVisible: boolean;
+  mouseRef: RefObject<{ x: number; y: number }>;
+  isFinePointer: boolean;
+}
+
+function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer }: HeroSceneProps) {
+  const parallaxGroupRef = useRef<THREE.Group>(null);
+  const currentPos = useRef({ x: 0, y: 0 });
+  const currentRot = useRef({ x: 0, y: 0 });
+
+  useFrame((_, delta) => {
+    if (!parallaxGroupRef.current || !isVisible || reducedMotion) return;
+
+    // Smooth easing with frame-rate independent exponential dampening
+    const factor = 1 - Math.exp(-3.2 * delta);
+    const targetX = isFinePointer && mouseRef.current ? mouseRef.current.x : 0;
+    const targetY = isFinePointer && mouseRef.current ? mouseRef.current.y : 0;
+
+    // Subtle luxury parallax offset: max ~0.22 units on X, ~0.14 on Y
+    currentPos.current.x += (targetX * 0.22 - currentPos.current.x) * factor;
+    currentPos.current.y += (targetY * 0.14 - currentPos.current.y) * factor;
+
+    // Subtle 3D tilt: max ~0.05 rad on Y, ~0.035 rad on X
+    currentRot.current.y += (targetX * 0.05 - currentRot.current.y) * factor;
+    currentRot.current.x += (-targetY * 0.035 - currentRot.current.x) * factor;
+
+    parallaxGroupRef.current.position.x = currentPos.current.x;
+    parallaxGroupRef.current.position.y = currentPos.current.y;
+    parallaxGroupRef.current.rotation.y = currentRot.current.y;
+    parallaxGroupRef.current.rotation.x = currentRot.current.x;
+  });
+
   return (
     <>
       <ambientLight color="#2e1065" intensity={0.9} />
       <directionalLight position={[4, 5, 3]} color="#c084fc" intensity={1.5} />
       <directionalLight position={[-4, 2, 2]} color="#fef08a" intensity={0.65} />
 
-      {/* 2 Optimized Floating Silk Ribbons (Main deep violet & soft lavender) */}
-      <FloatingRibbon
-        position={[2.3, 0.05, -1.1]}
-        rotation={[-0.35, 0.45, -0.28]}
-        scale={[1.35, 1.15, 1]}
-        color="#4c1d95"
-        emissive="#2e1065"
-        opacity={0.65}
-        speed={0.38}
-        offset={0}
-        reducedMotion={reducedMotion}
-        isVisible={isVisible}
-      />
-      <FloatingRibbon
-        position={[1.5, -0.7, 0.1]}
-        rotation={[-0.25, 0.32, -0.15]}
-        scale={[1.1, 0.95, 1]}
-        color="#8b5cf6"
-        emissive="#5b21b6"
-        opacity={0.52}
-        speed={0.3}
-        offset={2.4}
-        reducedMotion={reducedMotion}
-        isVisible={isVisible}
-      />
+      {/* Parallax Group containing ribbons and orbs */}
+      <group ref={parallaxGroupRef}>
+        {/* 2 Floating Silk Ribbons (Main deep violet & soft lavender) */}
+        <FloatingRibbon
+          position={[2.3, 0.05, -1.1]}
+          rotation={[-0.35, 0.45, -0.28]}
+          scale={[1.35, 1.15, 1]}
+          color="#4c1d95"
+          emissive="#2e1065"
+          opacity={0.65}
+          speed={0.38}
+          offset={0}
+          reducedMotion={reducedMotion}
+          isVisible={isVisible}
+        />
+        <FloatingRibbon
+          position={[1.5, -0.7, 0.1]}
+          rotation={[-0.25, 0.32, -0.15]}
+          scale={[1.1, 0.95, 1]}
+          color="#8b5cf6"
+          emissive="#5b21b6"
+          opacity={0.52}
+          speed={0.3}
+          offset={2.4}
+          reducedMotion={reducedMotion}
+          isVisible={isVisible}
+        />
 
-      {/* 2 Warm drifting glowing orbs (1 warm gold with soft light, 1 pearlescent lavender) */}
-      <GlowingOrb
-        basePosition={[1.4, 0.7, -0.4]}
-        color="#fef08a"
-        emissive="#f59e0b"
-        radius={0.15}
-        hasLight={true}
-        driftSpeed={0.28}
-        driftRadius={0.25}
-        offset={0}
-        reducedMotion={reducedMotion}
-        isVisible={isVisible}
-      />
-      <GlowingOrb
-        basePosition={[-1.7, -0.45, -1.2]}
-        color="#f5d0fe"
-        emissive="#c084fc"
-        radius={0.12}
-        hasLight={false}
-        driftSpeed={0.24}
-        driftRadius={0.2}
-        offset={2.2}
-        reducedMotion={reducedMotion}
-        isVisible={isVisible}
-      />
+        {/* 2 Warm drifting glowing orbs */}
+        <GlowingOrb
+          basePosition={[1.4, 0.7, -0.4]}
+          color="#fef08a"
+          emissive="#f59e0b"
+          radius={0.15}
+          hasLight={true}
+          driftSpeed={0.28}
+          driftRadius={0.25}
+          offset={0}
+          reducedMotion={reducedMotion}
+          isVisible={isVisible}
+        />
+        <GlowingOrb
+          basePosition={[-1.7, -0.45, -1.2]}
+          color="#f5d0fe"
+          emissive="#c084fc"
+          radius={0.12}
+          hasLight={false}
+          driftSpeed={0.24}
+          driftRadius={0.2}
+          offset={2.2}
+          reducedMotion={reducedMotion}
+          isVisible={isVisible}
+        />
+      </group>
     </>
   );
 }
 
 export default function HeroBackground3D() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
   const [hasWebGL, setHasWebGL] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isFinePointer, setIsFinePointer] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
@@ -257,8 +295,39 @@ export default function HeroBackground3D() {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mq.matches);
 
-    const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener?.('change', onChange);
+    const onMotionChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mq.addEventListener?.('change', onMotionChange);
+
+    // Detect fine pointer (mouse / trackpad) vs coarse pointer (touch device)
+    const pointerMq = window.matchMedia('(pointer: fine)');
+    setIsFinePointer(pointerMq.matches);
+
+    const onPointerChange = (e: MediaQueryListEvent) => setIsFinePointer(e.matches);
+    pointerMq.addEventListener?.('change', onPointerChange);
+
+    // Track gentle mouse movement only when fine pointer is active
+    let cleanupMouseListeners: (() => void) | undefined;
+    if (pointerMq.matches) {
+      const handleMouseMove = (e: MouseEvent) => {
+        // Normalize coordinates relative to window center [-1, 1]
+        mouseRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      };
+
+      const handleMouseLeave = () => {
+        // Smoothly ease back to rest state when cursor leaves the window
+        mouseRef.current.x = 0;
+        mouseRef.current.y = 0;
+      };
+
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+      document.addEventListener('mouseleave', handleMouseLeave);
+
+      cleanupMouseListeners = () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }
 
     // Pause WebGL rendering loop when hero scrolls off-screen
     const el = containerRef.current;
@@ -277,7 +346,9 @@ export default function HeroBackground3D() {
     }
 
     return () => {
-      mq.removeEventListener?.('change', onChange);
+      mq.removeEventListener?.('change', onMotionChange);
+      pointerMq.removeEventListener?.('change', onPointerChange);
+      cleanupMouseListeners?.();
       observer?.disconnect();
     };
   }, []);
@@ -307,9 +378,7 @@ export default function HeroBackground3D() {
             antialias: true,
             powerPreference: 'high-performance',
           }}
-          // Lower pixel ratio capped at 1 to 1.25 for buttery smooth performance on high-DPI screens
           dpr={[1, 1.25]}
-          // Pause frameloop completely when off-screen or when reduced motion is preferred
           frameloop={isVisible && !reducedMotion ? 'always' : 'never'}
           style={{
             background: 'transparent',
@@ -317,7 +386,12 @@ export default function HeroBackground3D() {
             height: '100%',
           }}
         >
-          <HeroScene reducedMotion={reducedMotion} isVisible={isVisible} />
+          <HeroScene
+            reducedMotion={reducedMotion}
+            isVisible={isVisible}
+            mouseRef={mouseRef}
+            isFinePointer={isFinePointer}
+          />
         </Canvas>
       </div>
     </WebGLErrorBoundary>

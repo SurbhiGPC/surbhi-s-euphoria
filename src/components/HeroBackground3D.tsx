@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo, useState, Component, type ReactNode, type RefObject } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { Hero3DLoader } from './Hero3DLoader';
 
 // Graceful WebGL Error Boundary fallback
 class WebGLErrorBoundary extends Component<
@@ -186,9 +187,10 @@ interface HeroSceneProps {
   isVisible: boolean;
   mouseRef: RefObject<{ x: number; y: number }>;
   isFinePointer: boolean;
+  isMobile: boolean;
 }
 
-function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer }: HeroSceneProps) {
+function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer, isMobile }: HeroSceneProps) {
   const parallaxGroupRef = useRef<THREE.Group>(null);
   const currentPos = useRef({ x: 0, y: 0 });
   const currentRot = useRef({ x: 0, y: 0 });
@@ -223,7 +225,7 @@ function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer }: HeroSc
 
       {/* Parallax Group containing ribbons and orbs */}
       <group ref={parallaxGroupRef}>
-        {/* 2 Floating Silk Ribbons (Main deep violet & soft lavender) */}
+        {/* Floating Silk Ribbons — 1 on mobile, 2 on desktop */}
         <FloatingRibbon
           position={[2.3, 0.05, -1.1]}
           rotation={[-0.35, 0.45, -0.28]}
@@ -236,20 +238,22 @@ function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer }: HeroSc
           reducedMotion={reducedMotion}
           isVisible={isVisible}
         />
-        <FloatingRibbon
-          position={[1.5, -0.7, 0.1]}
-          rotation={[-0.25, 0.32, -0.15]}
-          scale={[1.1, 0.95, 1]}
-          color="#8b5cf6"
-          emissive="#5b21b6"
-          opacity={0.52}
-          speed={0.3}
-          offset={2.4}
-          reducedMotion={reducedMotion}
-          isVisible={isVisible}
-        />
+        {!isMobile && (
+          <FloatingRibbon
+            position={[1.5, -0.7, 0.1]}
+            rotation={[-0.25, 0.32, -0.15]}
+            scale={[1.1, 0.95, 1]}
+            color="#8b5cf6"
+            emissive="#5b21b6"
+            opacity={0.52}
+            speed={0.3}
+            offset={2.4}
+            reducedMotion={reducedMotion}
+            isVisible={isVisible}
+          />
+        )}
 
-        {/* 2 Warm drifting glowing orbs */}
+        {/* Warm drifting glowing orbs — 1 on mobile, 2 on desktop */}
         <GlowingOrb
           basePosition={[1.4, 0.7, -0.4]}
           color="#fef08a"
@@ -262,18 +266,20 @@ function HeroScene({ reducedMotion, isVisible, mouseRef, isFinePointer }: HeroSc
           reducedMotion={reducedMotion}
           isVisible={isVisible}
         />
-        <GlowingOrb
-          basePosition={[-1.7, -0.45, -1.2]}
-          color="#f5d0fe"
-          emissive="#c084fc"
-          radius={0.12}
-          hasLight={false}
-          driftSpeed={0.24}
-          driftRadius={0.2}
-          offset={2.2}
-          reducedMotion={reducedMotion}
-          isVisible={isVisible}
-        />
+        {!isMobile && (
+          <GlowingOrb
+            basePosition={[-1.7, -0.45, -1.2]}
+            color="#f5d0fe"
+            emissive="#c084fc"
+            radius={0.12}
+            hasLight={false}
+            driftSpeed={0.24}
+            driftRadius={0.2}
+            offset={2.2}
+            reducedMotion={reducedMotion}
+            isVisible={isVisible}
+          />
+        )}
       </group>
     </>
   );
@@ -287,10 +293,18 @@ export default function HeroBackground3D() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [isFinePointer, setIsFinePointer] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     setHasWebGL(isWebGLAvailable());
+
+    // Mobile detection (≤700 px viewport width)
+    const mobileMq = window.matchMedia('(max-width: 700px)');
+    setIsMobile(mobileMq.matches);
+    const onMobileChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mobileMq.addEventListener?.('change', onMobileChange);
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mq.matches);
@@ -346,6 +360,7 @@ export default function HeroBackground3D() {
     }
 
     return () => {
+      mobileMq.removeEventListener?.('change', onMobileChange);
       mq.removeEventListener?.('change', onMotionChange);
       pointerMq.removeEventListener?.('change', onPointerChange);
       cleanupMouseListeners?.();
@@ -353,10 +368,13 @@ export default function HeroBackground3D() {
     };
   }, []);
 
-  if (!mounted || !hasWebGL) return null;
+  // Skip 3D entirely for reduced-motion users (zero WebGL overhead)
+  // and when WebGL is unavailable (static hero image shows naturally behind)
+  if (!mounted || !hasWebGL || reducedMotion) return null;
 
   return (
     <WebGLErrorBoundary fallback={null}>
+      <Hero3DLoader fadeOut={isReady} />
       <div
         ref={containerRef}
         className="hero-canvas-container"
@@ -369,6 +387,8 @@ export default function HeroBackground3D() {
           pointerEvents: 'none',
           zIndex: 0,
           overflow: 'hidden',
+          opacity: isReady ? 1 : 0,
+          transition: 'opacity 0.75s ease-out',
         }}
       >
         <Canvas
@@ -378,8 +398,9 @@ export default function HeroBackground3D() {
             antialias: true,
             powerPreference: 'high-performance',
           }}
-          dpr={[1, 1.25]}
-          frameloop={isVisible && !reducedMotion ? 'always' : 'never'}
+          dpr={isMobile ? 1 : [1, 1.25]}
+          frameloop={isVisible ? 'always' : 'never'}
+          onCreated={() => setIsReady(true)}
           style={{
             background: 'transparent',
             width: '100%',
@@ -391,6 +412,7 @@ export default function HeroBackground3D() {
             isVisible={isVisible}
             mouseRef={mouseRef}
             isFinePointer={isFinePointer}
+            isMobile={isMobile}
           />
         </Canvas>
       </div>
